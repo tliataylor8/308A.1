@@ -1,90 +1,112 @@
 
-// Part 1
-let counter = 5;
+let counter = 2;
 
 function incrementCounter() {
-    try{
-        console.log(counter+1);
-        counter++;
-        if (counter<0){
-            console.log(incrementCounter());
+    counter = counter + 1;  
+    console.log(counter);  
+    if (counter < 10) {  
+        incrementCounter();  
     }
-    // console.log("Counter: " + counter);
-    } catch(error){
-    console.error("An error occurred:", error);
-    console.error("Counter value:", counter);
-    }   
 }
 
-incrementCounter();
 
-// Part 2
-const flatArr = (arr) => {
-    return arr.reduce((acc, val)) => {
-        if(Array.isArray(value)) {
-            return acc.concat(flatArr(val));
+try {
+    incrementCounter();
+} catch (error) {
+    console.error("Stack overflow or other error occurred:", error);
+    console.log("Counter value at the time of error:", counter);  // Log the value of the counter
+}
+
+
+// PART 2 
+function flattenArray(arr) {
+    let result = [];
+    for (let i = 0; i < arr.length; i++) {
+        if (Array.isArray(arr[i])) {
+            result = result.concat(flattenArray(arr[i]));
         } else {
-            return acc.concat(val);
+            result.push(arr[i]);
         }
     }
+    return result;
 }
 
-console.log(flatArr([ [ [ 1, 2, 3 ] ], [ [ 'a', 'b', 'c' ] ], [ [ true, false ] ] ]));
-// caused stack overflow
+const nestedArray = [1, [2, [3, [4, 5]]], 6];
+console.log(flattenArray(nestedArray)); 
 
-
-const trampoline = (fn) => (...args) => {
-    let result = fn(...args);
-    while (typeof result === 'function') {
-      result = result();
+function trampoline(fn) {
+    while (typeof fn === 'function') {
+        fn = fn();  
     }
-    return result;
-  };
-  
-  const flatTram = trampoline(function flatten(arr) {
-    return arr.reduce((acc, val) => {
-      if (Array.isArray(val)) {
-        // Return a function instead of directly calling flatten
-        return () => acc.concat(flatten(val));
-      } else {
-        return acc.concat(val);
-      }
-    }, []);
-  });
-  
-  console.log(flatTram([[[1, 2, 3]], [['a', 'b', 'c']], [[true, false]]]));
-  
+    return fn;
+}
 
-//   Part 3
+function flattenArrayTrampolined(arr) {
+    let result = [];
+    let index = 0;
 
-const primeContainer = document.getElementById('primeContainer');
-const isPrime = (num) => {
-  if (num <= 1) return false;
+    function step() {
+        if (index >= arr.length) return result; 
+        if (Array.isArray(arr[index])) {
+            return () => {
+                let nestedResult = flattenArrayTrampolined(arr[index]);
+                result = result.concat(nestedResult);
+                index++;
+                return step();  
+            };
+        } else {
+            result.push(arr[index]);
+            index++;
+            return step();  
+        }
+    }
+
+    return step;  
+}
+
+const trampolinedArray = trampoline(flattenArrayTrampolined([1, [2, [3, [4, 5]]], 6]));
+console.log(trampolinedArray);  
+
+
+// PART 3
+function isPrime(num) {
+    if (num < 2) return false;  
+    for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) return false;
+    }
+    return true;
+}
+
+
+function isPrime(num) {
+  if (num < 2) return false;  
   for (let i = 2; i <= Math.sqrt(num); i++) {
-    if (num % i === 0) return false;
+      if (num % i === 0) return false;
   }
   return true;
-};
+}
+
+function displayPrimeNumbers(n) {
+  let primes = [];
 
 
-const addPrimes = (n) => {
-  let primes = []; 
+  function findNextPrime(i) {
+      if (i > n) {
+          console.log('Prime number calculation finished!');  
+          return;
+      }
 
-  const findPrimes = (current) => {
-    if (current > n) {
-      alert('Calculation completed.');
-      return;
-    }
+      if (isPrime(i)) {
+          primes.push(i);  
+          console.log(i);  
+      }
 
-    if (isPrime(current)) {
-      primes.push(current); 
-      primeContainer.textContent = primes.join(', '); 
-    }
+      setTimeout(() => findNextPrime(i + 1), 0);
+  }
 
-    
-    setTimeout(() => findPrimes(current + 1), 0);
-  };
-  findPrimes(2);
-};
+ 
+  findNextPrime(2);
+}
 
-addPrimes(10000);
+displayPrimeNumbers(100);
+
